@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
-#include "X11Macros.h"
 
 #define X_RESN 1000
 #define Y_RESN 1000
@@ -12,8 +11,6 @@ int main () {
 	int current = 0;
 	int next = 1;
 	double seq_start, seq_end, par_start, par_end;
-	
-	initX11(X_RESN, Y_RESN);
 	
 	printf("How big is the room?\n");
 	scanf("%d", &N);
@@ -41,7 +38,7 @@ int main () {
 	for (i = 0; i < N; ++i) {
 		for (j = 0; j < N; ++j) {
 			if(j % 10 == 0 && i % 10 == 0)
-				printf ("%.2f\t", h[current][i][j]);
+				h[0][i][j];
 		}
 		if(i % 10 == 0)
 			printf ("\n");
@@ -49,7 +46,6 @@ int main () {
 	
 	seq_start = omp_get_wtime();
 	for (iteration = 0; iteration < T; iteration++) {
-		XSetForeground(display, gc, BLUE);
  		for (i = 1; i < N - 1; i++)
  			for (j = 1; j < N - 1; j++) {
 				h[next][i][j] = 0.25 * (h[current][i + 1][j] + h[current][i - 1][j] + h[current][i][j - 1]  + h[current][i][j + 1]);
@@ -68,7 +64,7 @@ int main () {
 		if(i % 10 == 0)
 			printf ("\n");
 	}
-	
+
 	printf("\nParallel Initial Values\n");
 	for (i = 0; i < N; ++i) {
 		for (j = 0; j < N; ++j) {
