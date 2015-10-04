@@ -1,0 +1,4 @@
+eclipse.preferences.version=1
+remoteLaunchConfig/Hello=org.eclipse.remote.LocalServices\:Local
+remoteLaunchConfig/MatrixMult=org.eclipse.remote.LocalServices\:Local
+remoteLaunchType/org.eclipse.ptp.launch.parallelLaunch=org.eclipse.remote.LocalServices\:Local

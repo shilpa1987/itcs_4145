@@ -1,0 +1,15 @@
+21:17:27 **** Incremental Build of configuration Debug for project MatrixMult ****
+make all 
+Building file: /home/nwade/Documents/itcs_4145/assignment_3/matrixmult.c
+Invoking: GCC C Compiler
+mpicc -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"src/matrixmult.d" -MT"src/matrixmult.d" -o "src/matrixmult.o" "/home/nwade/Documents/itcs_4145/assignment_3/matrixmult.c"
+Finished building: /home/nwade/Documents/itcs_4145/assignment_3/matrixmult.c
+ 
+Building target: MatrixMult
+Invoking: GCC C Linker
+mpicc  -o "MatrixMult"  ./src/matrixmult.o   
+Finished building target: MatrixMult
+ 
+
+21:17:27 Build Finished (took 155ms)
+
