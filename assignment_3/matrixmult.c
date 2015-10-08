@@ -73,6 +73,17 @@ int main (int argc, char *argv[]){
 				fscanf(fd, "%lf", &b[i][j]);
 	}
 	
+	if (rank == 0){
+		for (i = 0; i < N; ++i){
+			for (j = 0; j < N; ++j){
+				c[i][j] = 0;
+				for (k = 0; k < N; ++k){
+					c[i][j] += a[i][k] * b[k][j];
+				}
+			}
+		}
+	}
+	
 	MPI_Barrier (MPI_COMM_WORLD);
 	
 	if (rank == 0) gettimeofday (&tv1, NULL);
@@ -82,9 +93,9 @@ int main (int argc, char *argv[]){
 	
 	for (i = 0; i < blksz; ++i){
 		for (j = 0; j < N; ++j){
-			c[i][j] = 0;
+			;//d[i][j] = 0;
 			for (k = 0; k < N; ++k){
-				c[i][j] += a[i][k] * b[k][j];
+				;//d[i][j] += a[i][k] * b[k][j];
 			}
 		}
 	}
@@ -96,6 +107,17 @@ int main (int argc, char *argv[]){
 		elapsed_time = (tv2.tv_sec - tv1.tv_sec) + ((tv2.tv_usec - tv1.tv_usec) / 1000000.0);
 		printf ("elapsed_time=\t%lf (seconds)\n", elapsed_time);
 		print_results("C =", c);
+		
+		//error = 0;
+		//for (i = 0; i < N; ++i)
+		//{
+		//	for (j = 0; j < N; ++j)
+		//	{
+		//		if ((c[i][j] - d[i][j] > 0.001) || (d[i][j] - c[i][j] > 0.001))
+		//			error = -1;
+		//	}
+		//}
+		//if(error == -1) {printf("ERROR, sequential and parallel versions give different answers\n"); }
 	}
 	MPI_Finalize();
 	return 0;
