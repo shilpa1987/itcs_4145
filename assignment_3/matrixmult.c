@@ -1,4 +1,4 @@
-#define N 512
+#define N 256
 #include <stdio.h>
 #include <sys/time.h>
 #include "mpi.h"
@@ -16,14 +16,10 @@ void print_results (char *prompt, double a[N][N]){
 }
 
 int main (int argc, char *argv[]){
+	double *x;
 	int i, j, k, error = 0;
-	double a[N][N], b[N][N], c[N][N];
-	
-	char *usage = "Usage: %s file\n";
-	FILE *fd;
-	
-	double elapsed_time;
-	struct timeval tv1, tv2;
+	double a[N][N], b[N][N], c[N][N], d[N][N];
+	double start, end;
 	
 	MPI_Status status;
 	int rank, P, blksz;
@@ -36,18 +32,6 @@ int main (int argc, char *argv[]){
 		error = -1;
 		printf ("Error -- N/P must be an integer\n");
 	} else blksz = N/P;
-	
-	if (rank == 0) {
-		if (argc < 2) {
-			fprintf (stderr, usage, argv[0]);
-			error = -1;
-		}
-		if ((fd = fopen (argv[1], "r")) == NULL) {
-			fprintf (stderr, "%s: Cannot open file %s for reading.\n", argv[0], argv[1]);
-			fprintf (stderr, usage, argv[0]);
-			error = -1;
-		}
-	}
 	
 	if (rank == 0){
 		for (i = 1; i < P; ++i){
@@ -66,14 +50,12 @@ int main (int argc, char *argv[]){
 	
 	if (rank == 0){
 		for (i = 0; i < N; ++i)
-			for (j = 0; j < N; ++j)
-				fscanf(fd, "%lf", &a[i][j]);
-		for (i = 0; i < N; ++i)
-			for (j = 0; j < N; ++j)
-				fscanf(fd, "%lf", &b[i][j]);
-	}
-	
-	if (rank == 0){
+			for (j = 0; j < N; ++j){
+				a[i][j] = (j * 1) + 1;
+				b[i][j] = (j * i) + 2;
+			}
+		
+		start = MPI_Wtime();
 		for (i = 0; i < N; ++i){
 			for (j = 0; j < N; ++j){
 				c[i][j] = 0;
@@ -82,42 +64,45 @@ int main (int argc, char *argv[]){
 				}
 			}
 		}
+		end = MPI_Wtime();
+		
+		printf ("sequentl= \t%lf (seconds)\n", end - start);
+		
+		x = malloc(blksz*N);
 	}
 	
 	MPI_Barrier (MPI_COMM_WORLD);
 	
-	if (rank == 0) gettimeofday (&tv1, NULL);
+	if (rank == 0) start = MPI_Wtime();
 	
-	MPI_Scatter (a, blksz*N, MPI_DOUBLE, a, blksz*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-	MPI_Bcast(b, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Scatter (a, blksz*N, MPI_DOUBLE, x, blksz*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Bcast (b, N*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	
 	for (i = 0; i < blksz; ++i){
 		for (j = 0; j < N; ++j){
-			;//d[i][j] = 0;
+			d[i][j] = 0;
 			for (k = 0; k < N; ++k){
-				;//d[i][j] += a[i][k] * b[k][j];
+				d[i][j] += a[i][k] * b[k][j];
 			}
 		}
 	}
 	
-	MPI_Gather (c, blksz*N, MPI_DOUBLE, c, blksz*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+	MPI_Gather (d, blksz*N, MPI_DOUBLE, x, blksz*N, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 	
 	if (rank == 0) {
-		gettimeofday(&tv2, NULL);
-		elapsed_time = (tv2.tv_sec - tv1.tv_sec) + ((tv2.tv_usec - tv1.tv_usec) / 1000000.0);
-		printf ("elapsed_time=\t%lf (seconds)\n", elapsed_time);
-		print_results("C =", c);
+		end = MPI_Wtime();
+		printf ("parallel=\t%lf (seconds)\n", end - start);
 		
-		//error = 0;
-		//for (i = 0; i < N; ++i)
-		//{
-		//	for (j = 0; j < N; ++j)
-		//	{
-		//		if ((c[i][j] - d[i][j] > 0.001) || (d[i][j] - c[i][j] > 0.001))
-		//			error = -1;
-		//	}
-		//}
-		//if(error == -1) {printf("ERROR, sequential and parallel versions give different answers\n"); }
+		error = 0;
+		for (i = 0; i < N; ++i)
+		{
+			for (j = 0; j < N; ++j)
+			{
+				if ((c[i][j] - d[i][j] > 0.001) || (d[i][j] - c[i][j] > 0.001))
+					error = -1;
+			}
+		}
+		if(error == -1) {printf("ERROR, sequential and parallel versions give different answers\n"); }
 	}
 	MPI_Finalize();
 	return 0;
